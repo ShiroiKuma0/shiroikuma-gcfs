@@ -188,7 +188,7 @@ func gcf_create_volume(rootCipherDir string, password []byte, plaintextNames boo
 	case 0:
 		useXChaCha = false
 	default:
-		useXChaCha = !stupidgcm.CpuHasAES()
+		useXChaCha = !stupidgcm.HasAESGCMHardwareSupport()
 	}
 	err := configfile.Create(&configfile.CreateArgs{
 		Filename:           filepath.Join(rootCipherDir, configfile.ConfDefaultName),
@@ -200,6 +200,7 @@ func gcf_create_volume(rootCipherDir string, password []byte, plaintextNames boo
 		DeterministicNames: false,
 		XChaCha20Poly1305:  useXChaCha,
 		LongNameMax:        255,
+		Masterkey:          nil,
 	}, returnedScryptHashBuff)
 	wipe(password)
 	if err == nil {

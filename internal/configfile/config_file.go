@@ -5,7 +5,6 @@ package configfile
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"syscall"
 
 	"os"
@@ -32,6 +31,7 @@ type FIDO2Params struct {
 	CredentialID []byte
 	// FIDO2 hmac-secret salt
 	HMACSalt []byte
+	AssertOptions []string
 }
 
 // ConfFile is the content of a config file.
@@ -71,6 +71,7 @@ type CreateArgs struct {
 	DeterministicNames bool
 	XChaCha20Poly1305  bool
 	LongNameMax        uint8
+	Masterkey          []byte
 }
 
 // Create - create a new config with a random key encrypted with
@@ -115,14 +116,12 @@ func Create(args *CreateArgs, returnedScryptHashBuff []byte) error {
 	if err := cf.Validate(); err != nil {
 		return err
 	}
-	// Catch bugs and invalid cli flag combinations early
-	cf.ScryptObject = NewScryptKDF(args.LogN)
-	if err := cf.Validate(); err != nil {
-		return err
-	}
 	{
-		// Generate new random master key
-		key := cryptocore.RandBytes(cryptocore.KeyLen)
+		key := args.Masterkey
+		if key == nil {
+			// Generate new random master key
+			key = cryptocore.RandBytes(cryptocore.KeyLen)
+		}
 		// Encrypt it using the password
 		// This sets ScryptObject and EncryptedKey
 		// Note: this looks at the FeatureFlags, so call it AFTER setting them.
@@ -174,12 +173,12 @@ func Load(filename string) (*ConfFile, error) {
 	cf.filename = filename
 
 	// Read from disk
-	js, err := ioutil.ReadFile(filename)
+	js, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 	if len(js) == 0 {
-		return nil, fmt.Errorf("Config file is empty")
+		return nil, fmt.Errorf("config file is empty")
 	}
 
 	// Unmarshal
