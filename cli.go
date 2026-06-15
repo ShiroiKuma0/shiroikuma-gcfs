@@ -167,6 +167,8 @@ usage:
   gcfs [-passfile F] sync   [-n] [-delete] [-checksum] [-v] [-base /p] <SRC> <DST>
                             # one of SRC/DST is a volume; the other plaintext.
                             # plain→vol encrypts, vol→plain decrypts (size+mtime).
+  gcfs [-passfile F] find   [-base /p] <volume>
+                            # path<TAB>mtime<TAB>date<TAB>size, files only (pc_find format)
 password: -passfile F or $GOCRYPTFS_PASSWORD`)
 		os.Exit(2)
 	}
@@ -201,6 +203,31 @@ password: -passfile F or $GOCRYPTFS_PASSWORD`)
 			die("usage: gcfs [-passfile F] sync [-n] [-delete] [-checksum] [-v] [-base /p] <SRC> <DST>")
 		}
 		doSync(passfile, o, pos[0], pos[1])
+		return
+	}
+
+	if rest[0] == "find" {
+		base := "/"
+		var pos []string
+		for i := 1; i < len(rest); i++ {
+			a := rest[i]
+			switch {
+			case a == "-base" && i+1 < len(rest):
+				base = rest[i+1]
+				i++
+			case strings.HasPrefix(a, "-base="):
+				base = strings.TrimPrefix(a, "-base=")
+			default:
+				if strings.HasPrefix(a, "-") {
+					die("find: unknown flag %q", a)
+				}
+				pos = append(pos, a)
+			}
+		}
+		if len(pos) != 1 {
+			die("usage: gcfs [-passfile F] find [-base /p] <volume>")
+		}
+		doFind(passfile, base, pos[0])
 		return
 	}
 
