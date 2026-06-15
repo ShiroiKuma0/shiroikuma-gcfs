@@ -24,3 +24,11 @@ gocryptfs.1
 
 # Ignore macos specific files
 .DS_Store
+
+# gcfs build artifacts
+/gcfs-arm64
+/gcfs-amd64
+/.pc/
+
+# Claude local settings
+.claude/settings.local.json

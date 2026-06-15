@@ -3,4 +3,4 @@
 // and the official website ( https://nuetzlich.net/gocryptfs/ ) for details.
 package main
 
-func main() {}
+// The entry point (func main) is provided by cli.go — the gcfs CLI.

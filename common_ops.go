@@ -33,6 +33,28 @@ func gcf_get_attrs(sessionID int, relPath string) (uint32, uint64, uint64, bool)
 	return st.Mode, size, uint64(st.Mtim.Sec), true
 }
 
+//export gcf_set_mtime
+func gcf_set_mtime(sessionID int, relPath string, mtime int64) bool {
+	value, ok := OpenedVolumes.Load(sessionID)
+	if !ok {
+		return false
+	}
+	volume := value.(*Volume)
+	dirfd, cName, err := volume.prepareAtSyscall(relPath)
+	if err != nil {
+		return false
+	}
+	defer syscall.Close(dirfd)
+	// Set mtime on the backing ciphertext file, leaving atime untouched. In
+	// gocryptfs forward mode the ciphertext file's mtime IS the plaintext mtime,
+	// so this makes gcfs preserve times exactly like a gocryptfs mount + rsync -t.
+	ts := []unix.Timespec{
+		{Sec: 0, Nsec: unix.UTIME_OMIT},
+		{Sec: mtime, Nsec: 0},
+	}
+	return errToBool(unix.UtimesNanoAt(dirfd, cName, ts, unix.AT_SYMLINK_NOFOLLOW))
+}
+
 // libgocryptfs: using Renameat instead of Renameat2 to support older kernels
 //export gcf_rename
 func gcf_rename(sessionID int, oldPath string, newPath string) bool {
