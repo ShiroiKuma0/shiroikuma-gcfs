@@ -24,3 +24,13 @@ e.g. on an unrooted Android phone via Termux.
     # one side is a volume (has gocryptfs.conf): plain->vol encrypts, vol->plain decrypts.
 
 See docs/ for the host and on-device test scripts.
+
+## Android JNI artifacts (for shoruikanri)
+
+`./build-jni.sh arm64-v8a` builds, into `build/arm64-v8a/`:
+- `libgocryptfs.so` — engine as a c-shared lib (static OpenSSL, soname `libgocryptfs.so`).
+- `libgocryptfs_jni.so` — JNI bridge (`native/gocryptfs_jni.c`, lifted from DroidFS and
+  re-pointed at `me.zhanghai.android.files.provider.gocryptfs.client`), DT_NEEDED `libgocryptfs.so`.
+
+Drop both into shoruikanri `app/src/main/jniLibs/arm64-v8a/`; the Kotlin side loads `gocryptfs`
+then `gocryptfs_jni`. mtime is whole seconds (no ms conversion).

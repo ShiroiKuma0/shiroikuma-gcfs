@@ -32,3 +32,4 @@ gocryptfs.1
 
 # Claude local settings
 .claude/settings.local.json
+/build/
